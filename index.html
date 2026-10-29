@@ -1,0 +1,582 @@
+const BACKEND = ''; // same origin, Vercel proxies
+<!doctype html>
+<html lang="en" data-theme="red">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>LYNX MD — WhatsApp Pairing Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800;900&family=Outfit:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --a-rgb:255,40,70; --b-rgb:255,120,40; --bg:#0b0206;
+  --a:rgb(var(--a-rgb)); --b:rgb(var(--b-rgb));
+  --panel:rgba(14,10,16,0.82);
+  --text:#f6f2f4; --text-muted:#9a8f99;
+  --emerald:#10b981;
+  --font-tech:'Rajdhani',system-ui,sans-serif;
+  --font-brand:'Orbitron',system-ui,sans-serif;
+  --font-main:'Outfit',system-ui,sans-serif;
+}
+html[data-theme="red"]{--a-rgb:255,40,70;--b-rgb:255,120,40;--bg:#0b0206}
+html[data-theme="cyan"]{--a-rgb:0,240,255;--b-rgb:168,85,247;--bg:#030712}
+html[data-theme="purple"]{--a-rgb:168,85,247;--b-rgb:236,72,153;--bg:#08030f}
+html[data-theme="green"]{--a-rgb:16,230,140;--b-rgb:6,182,212;--bg:#02100a}
+html[data-theme="gold"]{--a-rgb:255,190,40;--b-rgb:255,100,40;--bg:#0e0900}
+html[data-theme="blue"]{--a-rgb:59,130,246;--b-rgb:0,240,255;--bg:#020817}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  min-height:100vh;min-height:100dvh;
+  background-color:var(--bg);
+  background-image:
+    radial-gradient(circle at 10% 15%, rgba(var(--a-rgb),0.22) 0%, transparent 42%),
+    radial-gradient(circle at 90% 85%, rgba(var(--b-rgb),0.20) 0%, transparent 45%),
+    linear-gradient(160deg, rgba(var(--a-rgb),0.10) 0%, transparent 40%, rgba(var(--b-rgb),0.12) 100%),
+    linear-gradient(rgba(var(--a-rgb),0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--a-rgb),0.035) 1px, transparent 1px);
+  background-size:100% 100%,100% 100%,100% 100%,40px 40px,40px 40px;
+  background-attachment:fixed;
+  color:var(--text);
+  font-family:var(--font-main);
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;
+  position:relative;overflow-x:hidden;
+  transition:background-color .6s ease;
+}
+body.locked{overflow:hidden;height:100vh}
+body::before{
+  content:'';position:fixed;top:-150px;left:50%;transform:translateX(-50%);
+  width:min(800px,100vw);height:350px;
+  background:radial-gradient(ellipse at center, rgba(var(--a-rgb),0.28), transparent 70%);
+  filter:blur(50px);pointer-events:none;z-index:0;
+}
+
+/* ===== CINEMATIC INTRO ===== */
+#intro{
+  position:fixed;inset:0;z-index:100;background:#000;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;text-align:center;padding:24px;
+  transition:opacity .9s ease, transform .9s ease, visibility .9s;
+}
+#intro.hide{opacity:0;transform:scale(1.15);visibility:hidden;pointer-events:none}
+#intro::before{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(var(--a-rgb),0.30), transparent 55%),
+    radial-gradient(circle at 20% 80%, rgba(var(--b-rgb),0.22), transparent 50%);
+  animation:introGlow 6s ease-in-out infinite alternate;
+}
+@keyframes introGlow{from{opacity:.5;transform:scale(1)}to{opacity:1;transform:scale(1.2)}}
+.bar{position:absolute;left:0;width:100%;height:12vh;background:#000;z-index:3;
+  animation:barIn 1.6s cubic-bezier(.7,0,.2,1) forwards}
+.bar.top{top:0;transform:translateY(-100%);box-shadow:0 2px 30px rgba(var(--a-rgb),.5)}
+.bar.bottom{bottom:0;transform:translateY(100%);box-shadow:0 -2px 30px rgba(var(--a-rgb),.5)}
+@keyframes barIn{to{transform:translateY(0)}}
+.beam{position:absolute;top:-20%;width:2px;height:140%;
+  background:linear-gradient(180deg,transparent,var(--a),transparent);
+  opacity:0;transform:rotate(18deg);animation:beam 4s ease-in-out infinite}
+.beam:nth-child(1){left:15%;animation-delay:.4s}
+.beam:nth-child(2){left:40%;animation-delay:1.4s}
+.beam:nth-child(3){left:65%;animation-delay:.9s}
+.beam:nth-child(4){left:88%;animation-delay:2.1s}
+@keyframes beam{0%{opacity:0;transform:translateX(-80px) rotate(18deg)}40%{opacity:.7}100%{opacity:0;transform:translateX(120px) rotate(18deg)}}
+.intro-center{position:relative;z-index:4;display:flex;flex-direction:column;align-items:center;gap:18px}
+.welcome{
+  font-family:var(--font-tech);font-weight:700;letter-spacing:10px;
+  font-size:clamp(13px,3.4vw,22px);color:#e5e7eb;opacity:0;
+  animation:fadeUp 1.2s ease 1.2s forwards;padding-left:10px;
+}
+.intro-title{
+  font-family:var(--font-brand);font-weight:900;
+  font-size:clamp(34px,10vw,96px);letter-spacing:clamp(2px,1.2vw,10px);line-height:1.05;
+  background:linear-gradient(135deg,#fff 10%,var(--a) 55%,var(--b) 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 22px rgba(var(--a-rgb),.65));
+  opacity:0;transform:scale(1.5);letter-spacing:.4em;
+  animation:titleIn 2s cubic-bezier(.2,.7,.2,1) 1.9s forwards;
+}
+@keyframes titleIn{
+  0%{opacity:0;transform:scale(1.5);letter-spacing:.5em;filter:blur(14px) drop-shadow(0 0 22px rgba(var(--a-rgb),.65))}
+  100%{opacity:1;transform:scale(1);letter-spacing:clamp(2px,1.2vw,10px);filter:blur(0) drop-shadow(0 0 22px rgba(var(--a-rgb),.65))}
+}
+.intro-line{width:0;height:3px;border-radius:3px;background:linear-gradient(90deg,var(--a),var(--b));
+  box-shadow:0 0 16px rgba(var(--a-rgb),.9);animation:lineGrow 1.4s ease 3.4s forwards}
+@keyframes lineGrow{to{width:min(320px,60vw)}}
+.intro-sub{font-family:var(--font-tech);font-size:clamp(11px,2.8vw,15px);letter-spacing:5px;color:#9ca3af;
+  opacity:0;animation:fadeUp 1.2s ease 3.8s forwards;text-transform:uppercase}
+.enter-btn{
+  margin-top:14px;min-width:190px;padding:15px 40px;border-radius:12px;cursor:pointer;
+  font-family:var(--font-tech);font-size:17px;font-weight:700;letter-spacing:6px;padding-left:46px;
+  color:#e5e7eb;background:linear-gradient(180deg,#6b7280,#374151);
+  border:1px solid #9ca3af;box-shadow:0 6px 24px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.2);
+  opacity:0;animation:fadeUp 1s ease 4.5s forwards;transition:background .25s, transform .2s, box-shadow .25s;
+}
+.enter-btn:hover{background:linear-gradient(180deg,#9ca3af,#4b5563);transform:translateY(-2px);box-shadow:0 8px 30px rgba(255,255,255,.12)}
+.enter-btn:active{transform:translateY(1px)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== MAIN ===== */
+.container{
+  width:100%;max-width:1060px;position:relative;z-index:1;
+  display:flex;flex-direction:column;gap:22px;
+  opacity:0;transform:translateY(20px);pointer-events:none;
+  transition:opacity 1s ease .3s, transform 1s ease .3s;
+}
+body.entered .container{opacity:1;transform:none;pointer-events:auto}
+.top-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 6px;gap:10px}
+.brand-group{display:flex;align-items:center;gap:12px;min-width:0}
+.brand-logo-icon{width:42px;height:42px;display:grid;place-items:center;flex-shrink:0}
+.brand-logo-icon svg{width:36px;height:36px;filter:drop-shadow(0 0 10px rgba(var(--a-rgb),.6))}
+.brand-text h2{
+  font-family:var(--font-brand);font-size:20px;font-weight:900;letter-spacing:2px;line-height:1.1;
+  background:linear-gradient(90deg,#fff,var(--a));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.brand-text span{font-size:11px;color:var(--text-muted);letter-spacing:1px}
+.top-actions{display:flex;align-items:center;gap:10px;position:relative}
+.icon-pill{
+  width:38px;height:38px;border-radius:12px;background:rgba(20,14,22,.7);
+  border:1px solid rgba(var(--a-rgb),.3);display:grid;place-items:center;color:var(--a);
+  cursor:pointer;transition:all .2s;backdrop-filter:blur(8px);
+}
+.icon-pill:hover{border-color:var(--a);box-shadow:0 0 14px rgba(var(--a-rgb),.5);transform:translateY(-1px)}
+.icon-pill svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2}
+.theme-menu{
+  position:absolute;top:48px;right:0;z-index:20;
+  background:rgba(12,8,14,.95);border:1px solid rgba(var(--a-rgb),.35);border-radius:16px;
+  padding:14px;backdrop-filter:blur(16px);box-shadow:0 14px 40px rgba(0,0,0,.7);
+  opacity:0;visibility:hidden;transform:translateY(-8px);transition:all .22s;
+}
+.theme-menu.open{opacity:1;visibility:visible;transform:none}
+.theme-menu p{font-family:var(--font-tech);font-size:11px;letter-spacing:2px;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase}
+.swatches{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.swatch{
+  width:44px;height:44px;border-radius:50%;cursor:pointer;border:2px solid transparent;
+  transition:transform .2s, border-color .2s, box-shadow .2s;
+}
+.swatch:hover{transform:scale(1.1)}
+.swatch.active{border-color:#fff;box-shadow:0 0 16px currentColor}
+.main-grid{display:grid;grid-template-columns:1.05fr 1fr;gap:22px;align-items:stretch}
+.hero-card{
+  background:var(--panel);border:1px solid rgba(var(--a-rgb),.3);border-radius:20px;padding:32px 30px;
+  position:relative;backdrop-filter:blur(16px);
+  box-shadow:0 20px 50px rgba(0,0,0,.6), inset 0 0 30px rgba(var(--a-rgb),.07);
+  display:flex;flex-direction:column;justify-content:space-between;min-height:360px;overflow:hidden;
+}
+.hero-card::before{content:'';position:absolute;top:0;left:0;width:34px;height:34px;
+  background:linear-gradient(135deg,var(--a) 0%,transparent 50%);clip-path:polygon(0 0,100% 0,0 100%);opacity:.9}
+.hero-card::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(135deg,rgba(var(--a-rgb),.12),transparent 45%,rgba(var(--b-rgb),.12))}
+.hero-body{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:2;gap:16px}
+.hero-content{max-width:320px}
+.badge-tag{font-family:var(--font-tech);font-size:11px;font-weight:700;letter-spacing:3px;color:var(--a);margin-bottom:14px;text-shadow:0 0 8px rgba(var(--a-rgb),.6)}
+.hero-title{
+  font-family:var(--font-brand);font-size:38px;font-weight:900;letter-spacing:2px;line-height:1;margin-bottom:14px;
+  background:linear-gradient(135deg,#fff 20%,var(--a) 65%,var(--b) 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.hero-subtitle{font-family:var(--font-tech);font-size:14px;font-weight:700;letter-spacing:2px;color:#d6cfd4;text-transform:uppercase;line-height:1.5}
+.glow-divider{width:80px;height:3px;background:linear-gradient(90deg,var(--a),var(--b));border-radius:2px;margin-top:16px;box-shadow:0 0 12px rgba(var(--a-rgb),.7)}
+.hero-emblem{position:relative;width:150px;height:150px;display:grid;place-items:center;flex-shrink:0}
+.holo-ring{position:absolute;width:140px;height:140px;border-radius:50%;border:2px dashed rgba(var(--a-rgb),.55);animation:spin 22s linear infinite}
+.holo-ring-inner{position:absolute;width:110px;height:110px;border-radius:50%;border:1px solid rgba(var(--b-rgb),.6);box-shadow:0 0 25px rgba(var(--b-rgb),.4);animation:spin-reverse 15s linear infinite}
+.holo-center-icon{position:relative;z-index:3;width:80px;height:80px;filter:drop-shadow(0 0 18px rgba(var(--a-rgb),.8))}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes spin-reverse{from{transform:rotate(360deg)}to{transform:rotate(0)}}
+.hero-steps{
+  display:flex;align-items:center;gap:12px;margin-top:28px;padding-top:20px;position:relative;z-index:2;
+  border-top:1px solid rgba(255,255,255,.07);font-family:var(--font-tech);font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+}
+.step-item{display:flex;align-items:center;gap:6px;color:var(--text-muted)}
+.step-item.active{color:var(--a);text-shadow:0 0 8px rgba(var(--a-rgb),.6)}
+.step-num{width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.08);display:grid;place-items:center;font-size:10px}
+.step-item.active .step-num{background:var(--a);color:#050005;font-weight:900;box-shadow:0 0 10px var(--a)}
+.step-line{flex:1;height:1px;background:rgba(255,255,255,.08)}
+.step-line.active{background:linear-gradient(90deg,var(--a),rgba(var(--a-rgb),.2))}
+.action-column{display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel-card{
+  background:var(--panel);border:1px solid rgba(var(--a-rgb),.25);border-radius:18px;padding:18px 20px;
+  backdrop-filter:blur(16px);position:relative;box-shadow:0 10px 30px rgba(0,0,0,.45);transition:border-color .2s;
+}
+.panel-card:hover{border-color:rgba(var(--a-rgb),.55)}
+.server-card{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.card-left-info{display:flex;align-items:center;gap:14px}
+.icon-box{width:42px;height:42px;border-radius:12px;flex-shrink:0;background:rgba(var(--a-rgb),.1);border:1px solid rgba(var(--a-rgb),.3);display:grid;place-items:center;color:var(--a)}
+.icon-box svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2}
+.card-text h4{font-size:13px;font-weight:700;letter-spacing:.5px;color:#f4eef2}
+.card-text p{font-size:11px;color:var(--text-muted);margin-top:2px}
+.online-pill{display:flex;align-items:center;gap:6px;font-family:var(--font-tech);font-size:13px;font-weight:700;color:var(--emerald);background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);padding:5px 12px;border-radius:20px;white-space:nowrap}
+.online-dot{width:7px;height:7px;border-radius:50%;background:var(--emerald);box-shadow:0 0 8px var(--emerald);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.phone-card{display:flex;flex-direction:column;gap:12px}
+.input-header{display:flex;align-items:center;gap:12px}
+.input-container{display:flex;align-items:center;background:rgba(6,3,8,.8);border:1px solid rgba(var(--a-rgb),.35);border-radius:12px;overflow:hidden;position:relative;transition:all .2s}
+.input-container:focus-within{border-color:var(--a);box-shadow:0 0 16px rgba(var(--a-rgb),.5)}
+.country-pill{display:flex;align-items:center;gap:8px;padding:0 14px;height:52px;background:rgba(24,16,26,.9);border-right:1px solid rgba(var(--a-rgb),.25);font-family:var(--font-tech);font-size:16px;font-weight:700;color:#f8fafc;cursor:pointer;user-select:none;white-space:nowrap}
+.country-select{position:absolute;left:0;top:0;width:110px;height:100%;opacity:0;cursor:pointer}
+.phone-input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:#fff;font-family:var(--font-tech);font-size:20px;font-weight:700;letter-spacing:2px;padding:0 16px;height:52px}
+.phone-input::placeholder{color:rgba(160,150,160,.4);font-weight:600}
+.btn-submit{
+  width:100%;height:54px;border:none;border-radius:14px;
+  background:linear-gradient(90deg,var(--a) 0%,var(--b) 100%);background-size:200% auto;
+  color:#0b0206;font-family:var(--font-tech);font-size:16px;font-weight:800;letter-spacing:2px;text-transform:uppercase;
+  display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;overflow:hidden;
+  transition:all .3s ease;box-shadow:0 0 25px rgba(var(--a-rgb),.5);
+}
+.btn-submit:hover{background-position:right center;box-shadow:0 0 38px rgba(var(--b-rgb),.7);transform:translateY(-1px)}
+.btn-submit:active{transform:translateY(1px)}
+.btn-submit:disabled{opacity:.6;cursor:wait;transform:none}
+.btn-submit svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.5;transition:transform .2s}
+.btn-submit:hover svg{transform:translateX(4px)}
+.result-card{min-height:74px;display:flex;align-items:center;justify-content:center;text-align:center}
+.placeholder-msg{display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;color:var(--text-muted)}
+.placeholder-msg svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2}
+.code-box{width:100%;padding:8px 0;display:flex;flex-direction:column;align-items:center;gap:12px;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.code-label{font-family:var(--font-tech);font-size:11px;font-weight:700;letter-spacing:3px;color:var(--a)}
+.code-badge-wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;background:rgba(var(--a-rgb),.1);border:1px solid var(--a);border-radius:12px;padding:8px 18px;box-shadow:0 0 25px rgba(var(--a-rgb),.5)}
+.code-value{font-family:var(--font-brand);font-size:28px;font-weight:900;letter-spacing:5px;color:#fff;text-shadow:0 0 14px var(--a)}
+.btn-copy{background:var(--a);border:none;border-radius:8px;color:#0b0206;font-family:var(--font-tech);font-size:11px;font-weight:800;letter-spacing:1px;padding:6px 12px;cursor:pointer;transition:all .2s}
+.btn-copy:hover{background:#fff;box-shadow:0 0 10px #fff}
+.code-guide{font-size:12px;color:#d6cfd4;line-height:1.5;max-width:380px}
+.error-msg{color:#f87171;font-size:13px;display:flex;align-items:center;gap:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);padding:10px 16px;border-radius:10px;width:100%;justify-content:center}
+.footer{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:10px;text-align:center}
+.footer-line{width:180px;height:2px;background:linear-gradient(90deg,transparent,var(--a),var(--b),transparent);border-radius:2px;box-shadow:0 0 10px rgba(var(--a-rgb),.6)}
+.footer-brand{font-family:var(--font-brand);font-size:13px;font-weight:800;letter-spacing:3px;color:#f8fafc}
+.footer-tagline{font-family:var(--font-tech);font-size:11px;letter-spacing:2px;color:var(--text-muted)}
+@media(max-width:850px){
+  .main-grid{grid-template-columns:1fr;gap:18px}
+  .hero-card{min-height:auto;padding:24px 20px}
+  .hero-title{font-size:30px}
+  .hero-emblem{width:110px;height:110px}
+  .holo-ring{width:100px;height:100px}
+  .holo-ring-inner{width:80px;height:80px}
+  .holo-center-icon{width:55px;height:55px}
+}
+@media(max-width:520px){
+  body{padding:14px 12px;align-items:flex-start}
+  .hero-body{flex-direction:column-reverse;text-align:center}
+  .hero-content{max-width:100%}
+  .glow-divider{margin-left:auto;margin-right:auto}
+  .hero-steps{gap:8px;font-size:10px;letter-spacing:1px}
+  .brand-text h2{font-size:17px}
+  .brand-text span{display:none}
+  .phone-input{font-size:17px;letter-spacing:1px;padding:0 10px}
+  .country-pill{padding:0 10px;font-size:14px}
+  .code-value{font-size:22px;letter-spacing:3px}
+  .server-card{flex-wrap:wrap}
+  .bar{height:9vh}
+  .welcome{letter-spacing:6px}
+}
+</style>
+</head>
+<body class="locked">
+
+<div id="intro">
+  <div class="bar top"></div>
+  <div class="bar bottom"></div>
+  <div class="beam"></div><div class="beam"></div><div class="beam"></div><div class="beam"></div>
+  <div class="intro-center">
+    <div class="welcome">WELCOME TO</div>
+    <h1 class="intro-title">LYNX MD BOT</h1>
+    <div class="intro-line"></div>
+    <div class="intro-sub">Secure • Fast • Reliable</div>
+    <button id="enterBtn" class="enter-btn" type="button">ENTER</button>
+  </div>
+</div>
+
+<div class="container">
+  <header class="top-bar">
+    <div class="brand-group">
+      <div class="brand-logo-icon">
+        <svg viewBox="0 0 40 40">
+          <defs>
+            <linearGradient id="grad-logo" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:rgb(var(--a-rgb))" />
+              <stop offset="100%" style="stop-color:rgb(var(--b-rgb))" />
+            </linearGradient>
+          </defs>
+          <polygon points="20,2 38,12 38,28 20,38 2,28 2,12" fill="none" stroke="url(#grad-logo)" stroke-width="2.5" />
+          <circle cx="20" cy="20" r="7" fill="url(#grad-logo)" />
+          <circle cx="20" cy="20" r="12" fill="none" stroke="currentColor" style="color:rgb(var(--a-rgb))" stroke-width="1.2" stroke-dasharray="3,3" />
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h2>LYNX MD</h2>
+        <span>WhatsApp Pairing Tool</span>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <div class="icon-pill" id="themeToggle" title="Change Theme">
+        <svg viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.4-1.1-.3-.3-.5-.7-.5-1.1 0-.8.7-1.5 1.5-1.5H16c3.3 0 6-2.7 6-6 0-4.9-4.5-9-10-9z"/></svg>
+      </div>
+      <div class="theme-menu" id="themeMenu">
+        <p>Choose Theme</p>
+        <div class="swatches">
+          <div class="swatch" data-theme="red" style="background:linear-gradient(135deg,#ff2846,#ff7828);color:#ff2846" title="Red"></div>
+          <div class="swatch" data-theme="cyan" style="background:linear-gradient(135deg,#00f0ff,#a855f7);color:#00f0ff" title="Cyan"></div>
+          <div class="swatch" data-theme="purple" style="background:linear-gradient(135deg,#a855f7,#ec4899);color:#a855f7" title="Purple"></div>
+          <div class="swatch" data-theme="green" style="background:linear-gradient(135deg,#10e68c,#06b6d4);color:#10e68c" title="Green"></div>
+          <div class="swatch" data-theme="gold" style="background:linear-gradient(135deg,#ffbe28,#ff6428);color:#ffbe28" title="Gold"></div>
+          <div class="swatch" data-theme="blue" style="background:linear-gradient(135deg,#3b82f6,#00f0ff);color:#3b82f6" title="Blue"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-grid">
+    <section class="hero-card">
+      <div class="hero-body">
+        <div class="hero-content">
+          <div class="badge-tag">SECURE • FAST • RELIABLE</div>
+          <h1 class="hero-title">LYNX MD</h1>
+          <div class="hero-subtitle">
+            CONNECT YOUR WHATSAPP<br>
+            GET PAIRING CODE
+          </div>
+          <div class="glow-divider"></div>
+        </div>
+
+        <div class="hero-emblem">
+          <div class="holo-ring"></div>
+          <div class="holo-ring-inner"></div>
+          <div class="holo-center-icon">
+            <svg viewBox="0 0 100 100" fill="none">
+              <defs>
+                <linearGradient id="emblem-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:rgb(var(--a-rgb))" />
+                  <stop offset="100%" style="stop-color:rgb(var(--b-rgb))" />
+                </linearGradient>
+              </defs>
+              <path d="M50 20 L60 38 L78 30 L70 52 L30 52 L22 30 L40 38 Z" fill="url(#emblem-grad)" opacity="0.9" />
+              <path d="M42 42 L58 42 L58 70 L72 70" stroke="url(#emblem-grad)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+              <ellipse cx="50" cy="58" rx="42" ry="14" style="stroke:rgb(var(--a-rgb))" stroke-width="2.5" stroke-dasharray="8,4" transform="rotate(-25 50 58)" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-steps">
+        <div class="step-item">
+          <span class="step-num">1</span>
+          <span>Server</span>
+        </div>
+        <div class="step-line active"></div>
+        <div class="step-item active">
+          <span class="step-num">2</span>
+          <span>Number</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item">
+          <span class="step-num">3</span>
+          <span>Code</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="action-column">
+      <div class="panel-card server-card">
+        <div class="card-left-info">
+          <div class="icon-box">
+            <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="7" rx="2"/><rect x="2" y="14" width="20" height="7" rx="2"/><circle cx="6" cy="6.5" r="1" fill="currentColor"/><circle cx="6" cy="17.5" r="1" fill="currentColor"/></svg>
+          </div>
+          <div class="card-text">
+            <h4>Select a server</h4>
+            <p>Cloud Cluster • Europe West</p>
+          </div>
+        </div>
+        <div class="online-pill">
+          <span class="online-dot"></span>
+          <span>1 online</span>
+        </div>
+      </div>
+
+      <div class="panel-card phone-card">
+        <div class="input-header">
+          <div class="icon-box">
+            <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          </div>
+          <div class="card-text">
+            <h4>WHATSAPP NUMBER</h4>
+            <p>Enter your number with country code</p>
+          </div>
+        </div>
+
+        <form id="pairForm">
+          <div class="input-container">
+            <div class="country-pill" id="countryDisplay">
+              <span>🇵🇰 +92</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <select class="country-select" id="countryCode">
+              <option value="92" data-flag="🇵🇰" selected>PK (+92)</option>
+              <option value="1" data-flag="🇺🇸">US (+1)</option>
+              <option value="91" data-flag="🇮🇳">IN (+91)</option>
+              <option value="44" data-flag="🇬🇧">UK (+44)</option>
+              <option value="966" data-flag="🇸🇦">SA (+966)</option>
+              <option value="971" data-flag="🇦🇪">AE (+971)</option>
+              <option value="880" data-flag="🇧🇩">BD (+880)</option>
+              <option value="90" data-flag="🇹🇷">TR (+90)</option>
+              <option value="62" data-flag="🇮🇩">ID (+62)</option>
+              <option value="234" data-flag="🇳🇬">NG (+234)</option>
+              <option value="" data-flag="🌐">Other / Full</option>
+            </select>
+            <input 
+              id="phoneInput" 
+              class="phone-input" 
+              type="tel" 
+              inputmode="numeric" 
+              autocomplete="tel" 
+              placeholder="335 1234567" 
+              required
+            >
+          </div>
+
+          <button id="submitBtn" class="btn-submit" type="submit" style="margin-top:12px;">
+            <span>⚡</span>
+            <span>GENERATE PAIRING CODE</span>
+            <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </form>
+      </div>
+
+      <div id="resultBox" class="panel-card result-card">
+        <div class="placeholder-msg" id="placeholder">
+          <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>Your pairing code will appear here</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-line"></div>
+    <div class="footer-brand">LYNX MD</div>
+    <div class="footer-tagline">WATCHING THE SHADOWS • BUILT FOR REAL ONES</div>
+  </footer>
+</div>
+
+<script>
+const BACKEND = ''; // Path A: Same origin, Vercel proxies requests to Northflank
+
+const countrySelect = document.getElementById('countryCode');
+const countryDisplay = document.getElementById('countryDisplay');
+const phoneInput = document.getElementById('phoneInput');
+const form = document.getElementById('pairForm');
+const button = document.getElementById('submitBtn');
+const resultBox = document.getElementById('resultBox');
+
+// Country Code Dynamic Flag update
+countrySelect.addEventListener('change', () => {
+  const opt = countrySelect.options[countrySelect.selectedIndex];
+  const flag = opt.dataset.flag || '🌐';
+  const val = opt.value ? '+' + opt.value : '';
+  countryDisplay.querySelector('span').textContent = `${flag} ${val}`;
+});
+
+/* ---- Intro / Enter ---- */
+const intro = document.getElementById('intro');
+document.getElementById('enterBtn').addEventListener('click', () => {
+  intro.classList.add('hide');
+  document.body.classList.remove('locked');
+  document.body.classList.add('entered');
+  setTimeout(() => { intro.style.display = 'none'; }, 1000);
+});
+
+/* ---- Theme picker ---- */
+const themeToggle = document.getElementById('themeToggle');
+const themeMenu = document.getElementById('themeMenu');
+const swatches = document.querySelectorAll('.swatch');
+function applyTheme(name) {
+  document.documentElement.setAttribute('data-theme', name);
+  swatches.forEach(s => s.classList.toggle('active', s.dataset.theme === name));
+  try { localStorage.setItem('lynx-theme', name); } catch (e) {}
+}
+let savedTheme = 'red';
+try { savedTheme = localStorage.getItem('lynx-theme') || 'red'; } catch (e) {}
+applyTheme(savedTheme);
+themeToggle.addEventListener('click', e => { e.stopPropagation(); themeMenu.classList.toggle('open'); });
+swatches.forEach(s => s.addEventListener('click', e => { e.stopPropagation(); applyTheme(s.dataset.theme); }));
+document.addEventListener('click', e => { if (!themeMenu.contains(e.target)) themeMenu.classList.remove('open'); });
+
+/* ---- Pairing Logic with Path A Proxies ---- */
+let poller = null;
+
+async function pollStatus(sessionId) {
+  try {
+    const res = await fetch(`${BACKEND}/api/status/` + encodeURIComponent(sessionId));
+    const data = await res.json();
+    if (data.status === 'paired') {
+      resultBox.innerHTML = `
+        <div class="code-box">
+          <div class="code-label" style="color:var(--emerald)">SUCCESSFULLY LINKED</div>
+          <div class="code-badge-wrap" style="border-color:var(--emerald); background:rgba(16,185,129,0.1)">
+            <span class="code-value" style="color:var(--emerald); font-size:20px;">Bot is starting up...</span>
+          </div>
+        </div>`;
+      clearInterval(poller);
+      return;
+    }
+    if (data.status === 'waiting') return;
+  } catch (err) {
+    console.error('Polling error:', err);
+  }
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const cCode = countrySelect.value;
+  const rawNum = phoneInput.value.replace(/\D/g, '');
+  const number = cCode ? cCode + rawNum : rawNum;
+
+  if (number.length < 8) {
+    resultBox.innerHTML = `<div class="error-msg">Enter a valid phone number with country code.</div>`;
+    return;
+  }
+
+  button.disabled = true;
+  resultBox.innerHTML = `
+    <div class="code-box">
+      <div class="code-label">REQUESTING CODE</div>
+      <div class="code-badge-wrap">
+        <span class="code-value" style="font-size:20px;">Connecting...</span>
+      </div>
+    </div>`;
+
+  try {
+    const res = await fetch(`${BACKEND}/api/pair`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ number }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Failed to generate code');
+
+    const code = data.code || 'UNKNOWN';
+    resultBox.innerHTML = `
+      <div class="code-box">
+        <div class="code-label">YOUR PAIRING CODE</div>
+        <div class="code-badge-wrap">
+          <span class="code-value" id="codeText">${code}</span>
+          <button class="btn-copy" id="copyBtn" type="button">COPY</button>
+        </div>
+        <div class="code-guide">Open WhatsApp → Linked Devices → Link with phone number → Enter code</div>
+      </div>`;
+
+    document.getElementById('copyBtn').addEventListener('click', () => {
+      navigator.clipboard.writeText(code);
+      document.getElementById('copyBtn').textContent = 'COPIED!';
+      setTimeout(() => { document.getElementById('copyBtn').textContent = 'COPY'; }, 2000);
+    });
+
+    clearInterval(poller);
+    poller = setInterval(() => pollStatus(data.sessionId), 3000);
+  } catch (err) {
+    resultBox.innerHTML = `<div class="error-msg">${err.message || 'Could not connect to backend server.'}</div>`;
+    button.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
