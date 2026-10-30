@@ -579,8 +579,11 @@ if (!res.ok || !data.code) {
       setTimeout(() => { document.getElementById('copyBtn').textContent = 'COPY'; }, 2000);
     });
 
-    clearInterval(poller);
-    poller = setInterval(() => pollStatus(data.sessionId), 3000);
+   tries = 0;
+    poller = setInterval(() => {
+      if (++tries > 40) { clearInterval(poller); return; }
+      pollStatus(data.sessionId);
+    }, 3000);
   } catch (err) {
     resultBox.innerHTML = `<div class="error-msg">${err.message || 'Could not connect to backend server.'}</div>`;
     button.disabled = false;
