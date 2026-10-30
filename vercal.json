@@ -2,7 +2,6 @@
   "rewrites": [
     { "source": "/api/pair", "destination": "https://lynx--lynxmdbot--9krrlzzlhm5q.code.run/pair" },
     { "source": "/api/status/:id", "destination": "https://lynx--lynxmdbot--9krrlzzlhm5q.code.run/status/:id" },
-    { "source": "/api/health", "destination": "https://lynx--lynxmdbot--9krrlzzlhm5q.code.run/health" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/api/health", "destination": "https://lynx--lynxmdbot--9krrlzzlhm5q.code.run/health" }
   ]
 }
