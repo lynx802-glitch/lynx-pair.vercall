@@ -457,7 +457,7 @@ body.entered .container{opacity:1;transform:none;pointer-events:auto}
 </div>
 
 <script>
-const API = 'https://lynx--lynx-md--qlw7y98cx88.code.run';
+const API = location.hostname.endsWith('.code.run') ? '' : 'https://lynx--lynx-md--qlw7y98cx88.code.run';
 
 const countrySelect = document.getElementById('countryCode');
 const countryDisplay = document.getElementById('countryDisplay');
