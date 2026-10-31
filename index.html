@@ -457,7 +457,7 @@ body.entered .container{opacity:1;transform:none;pointer-events:auto}
 </div>
 
 <script>
-const BACKEND = 'https://lynx--lynxmdbot--9krrlzzlhm5q.code.run';
+const API = 'https://lynx--lynx-md--qlw7y98cx88.code.run';
 
 const countrySelect = document.getElementById('countryCode');
 const countryDisplay = document.getElementById('countryDisplay');
@@ -501,7 +501,7 @@ let poller = null;
 async function pollStatus(sessionId) {
   if (!sessionId) return;
   try {
-    const res = await fetch(BACKEND + '/api/status/' + encodeURIComponent(sessionId));
+    const res = await fetch(API + '/api/status/' + encodeURIComponent(sessionId));
     const data = await res.json();
     if (data.status === 'paired') {
       clearInterval(poller);
@@ -540,7 +540,7 @@ form.addEventListener('submit', async (e) => {
     '</div>';
 
   try {
-    const res = await fetch(BACKEND + '/api/pair', {
+    const res = await fetch(API + '/api/pair', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ phone: number }),
