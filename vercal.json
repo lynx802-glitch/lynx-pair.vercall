@@ -1,7 +1,0 @@
-{
-  "rewrites": [
-    { "source": "/api/pair", "destination": "https://lynx--lynx-md--qlw7y98cx88.code.run/pair" },
-    { "source": "/api/status/:id", "destination": "https://lynx--lynx-md--qlw7y98cx88.code.run/status/:id" },
-    { "source": "/api/health", "destination": "https://lynx--lynx-md--qlw7y98cx88.code.run/health" }
-  ]
-}
